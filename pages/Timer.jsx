@@ -1,14 +1,12 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import reactNative from "react-native";
 import MyButton from "./components/MyButton";
-import NetInfo from "@react-native-community/netinfo";
+import vars from "./components/Vars";
 
-const { View, Text, TextInput, Button, StyleSheet } = reactNative;
+const { View, Text, TextInput, StyleSheet } = reactNative;
 const API_URL = "http://192.168.0.1:3000/timer";
 
-const TimerScreen = () => {
-  const [netinfo, setnetinfo] = useState("");
-
+const Timer = () => {
   const [minutes, setMinutes] = useState("5");
   const [seconds, setSeconds] = useState("0");
 
@@ -37,26 +35,19 @@ const TimerScreen = () => {
       });
   };
 
-  useEffect(() => {
-    NetInfo.fetch().then((state) => {
-      console.log(state);
-      setnetinfo(JSON.stringify(state));
-    });
-
-  }, []);
-
   return (
-    <View style={{ flex: 1 }}>
+    <View style={{ flex: 1, backgroundColor: vars.color.four }}>
       <View
         style={{
-          // backgroundColor: "red",
           flex: 1,
           justifyContent: "center",
           alignItems: "center",
           flexDirection: "row",
         }}
       >
-        <View>
+        <View
+          style={{ justifyContent: "center", alignItems: "center", gap: 15 }}
+        >
           <Text>Set minutes</Text>
 
           <MyButton
@@ -77,9 +68,11 @@ const TimerScreen = () => {
           />
         </View>
 
-        <Text style={{fontSize: 30}}>:</Text>
+        <Text style={{ fontSize: 30 }}>:</Text>
 
-        <View>
+        <View
+          style={{ justifyContent: "center", alignItems: "center", gap: 15 }}
+        >
           <Text>Set seconds</Text>
 
           <MyButton
@@ -132,6 +125,7 @@ const TimerScreen = () => {
           alignItems: "center",
           flexDirection: "row",
           height: "30%",
+          // top: 0
         }}
       >
         <MyButton
@@ -147,7 +141,7 @@ const TimerScreen = () => {
 const styles = StyleSheet.create({
   numberInput: {
     borderWidth: 1,
-    borderColor: "gray",
+    borderColor: vars.color.two,
     padding: 30,
     fontSize: 30,
     margin: 20,
@@ -155,4 +149,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default TimerScreen;
+export default Timer;
