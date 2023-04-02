@@ -1,18 +1,21 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import reactNative from "react-native";
 import MyButton from "./components/MyButton";
 import vars from "./components/Vars";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import axios from "axios";
 
 const { View, Text, TextInput, StyleSheet } = reactNative;
-const API_URL = "http://192.168.0.1:3000/Count";
 
 const Count = () => {
   const [target, settarget] = useState("20");
+  const [ipAddress, setIpAddress] = useState("");
+  const [isPause, setisPause] = useState(false);
 
   const handleStartCount = () => {
     const data = JSON.stringify({ target });
 
-    fetch(API_URL, {
+    fetch(`http://${ipAddress}:3000/count`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -26,10 +29,55 @@ const Count = () => {
       })
       .catch((error) => {
         console.log(error);
-        alert(error);
+        alert(`Failed to set ${ipAddress} \n${error}`);
+
         // Handle the error as needed
       });
   };
+
+  const getVariable = () => {
+    axios
+      .get(`http://${ipAddress}:3000/variable`)
+      .then((val) => {
+        val.data.payload.isPause == true ? setisPause(true) : setisPause(false);
+      })
+      .catch((error) => {
+        console.log(error);
+        alert(`Failed to get ${ipAddress} \n${error}`);
+        // Handle the error as needed
+      });
+  };
+   const handleStopCount = () => {
+     axios
+       .post(`http://${ipAddress}:3000/stop`, {})
+       .then((val) => {
+         val.data.payload.isPause == true
+           ? setisPause(true)
+           : setisPause(false);
+       })
+       .catch((error) => {
+         console.log(error);
+         alert(`Failed to get ${ipAddress} \n${error}`);
+         // Handle the error as needed
+       });
+   };
+
+
+  const loadIpAddress = async () => {
+    try {
+      const ipAddress = await AsyncStorage.getItem("ipAddress");
+      if (ipAddress !== null) {
+        setIpAddress(ipAddress);
+      }
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
+  useEffect(() => {
+    loadIpAddress();
+    getVariable();
+  }, []);
 
   return (
     <View style={{ flex: 1, backgroundColor: vars.color.four }}>
@@ -43,7 +91,10 @@ const Count = () => {
       >
         <Text>Set Target</Text>
 
-        <MyButton title="Increment" onPress={() => settarget(Number(target) + 1)} />
+        <MyButton
+          title="Increment"
+          onPress={() => settarget(Number(target) + 1)}
+        />
 
         <TextInput
           placeholder="00"
@@ -56,7 +107,10 @@ const Count = () => {
           style={styles.numberInput}
         />
 
-        <MyButton title="decrement" onPress={() => settarget(Number(target) - 1)} />
+        <MyButton
+          title="decrement"
+          onPress={() => settarget(Number(target) - 1)}
+        />
       </View>
 
       <View
@@ -69,11 +123,20 @@ const Count = () => {
           // top: 0
         }}
       >
-        <MyButton
-          title="Start Count"
-          textStyle={{ padding: 20, fontSize: 20 }}
-          onPress={handleStartCount}
-        />
+        {isPause == false ? (
+          <MyButton
+            title="Start count"
+            textStyle={{ padding: 20, fontSize: 20 }}
+            onPress={handleStartCount}
+          />
+        ) : (
+          <MyButton
+            title="Stop"
+            btnStyle={{ backgroundColor: vars.color.tree, borderWidth: 1 }}
+            textStyle={{ padding: 20, fontSize: 20 }}
+            onPress={handleStopCount}
+          />
+        )}
       </View>
     </View>
   );

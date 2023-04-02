@@ -1,14 +1,17 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import reactNative from "react-native";
 import MyButton from "./components/MyButton";
 import vars from "./components/Vars";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import axios from "axios";
 
 const { View, Text, TextInput, StyleSheet } = reactNative;
-const API_URL = "http://192.168.0.1:3000/timer";
 
 const Timer = () => {
   const [minutes, setMinutes] = useState("5");
   const [seconds, setSeconds] = useState("0");
+  const [ipAddress, setIpAddress] = useState("");
+  const [isPause, setisPause] = useState(false);
 
   const handleStartTimer = () => {
     const targetM = parseInt(minutes) || 0;
@@ -16,13 +19,8 @@ const Timer = () => {
 
     const data = JSON.stringify({ targetM, targetS });
 
-    fetch(API_URL, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: data,
-    })
+    axios
+      .post(`http://${ipAddress}:3000/timer`, { data })
       .then((response) => {
         console.log(response);
         alert(response);
@@ -30,10 +28,52 @@ const Timer = () => {
       })
       .catch((error) => {
         console.log(error);
-        alert(error);
+        alert(`Failed to set ${ipAddress} \n${error}`);
         // Handle the error as needed
       });
   };
+
+  const getVariable = () => {
+    axios
+      .get(`http://${ipAddress}:3000/variable`)
+      .then((val) => {
+        val.data.payload.isPause == true ? setisPause(true) : setisPause(false);
+      })
+      .catch((error) => {
+        console.log(error);
+        alert(`Failed to get ${ipAddress} \n${error}`);
+        // Handle the error as needed
+      });;
+  };
+
+  const handleStopTimer = () => {
+    axios
+      .post(`http://${ipAddress}:3000/stop`, {})
+      .then((val) => {
+        val.data.payload.isPause == true ? setisPause(true) : setisPause(false);
+      })
+      .catch((error) => {
+        console.log(error);
+        alert(`Failed to get ${ipAddress} \n${error}`);
+        // Handle the error as needed
+      });
+  };
+
+  const loadIpAddress = async () => {
+    try {
+      const ipAddress = await AsyncStorage.getItem("ipAddress");
+      if (ipAddress !== null) {
+        setIpAddress(ipAddress);
+      }
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
+  useEffect(() => {
+    loadIpAddress();
+    getVariable();
+  }, []);
 
   return (
     <View style={{ flex: 1, backgroundColor: vars.color.four }}>
@@ -128,11 +168,20 @@ const Timer = () => {
           // top: 0
         }}
       >
-        <MyButton
-          title="Start Timer"
-          textStyle={{ padding: 20, fontSize: 20 }}
-          onPress={handleStartTimer}
-        />
+        {isPause == false ? (
+          <MyButton
+            title="Start Timer"
+            textStyle={{ padding: 20, fontSize: 20 }}
+            onPress={handleStartTimer}
+          />
+        ) : (
+          <MyButton
+            title="Stop"
+            btnStyle={{ backgroundColor: vars.color.tree, borderWidth: 1 }}
+            textStyle={{ padding: 20, fontSize: 20 }}
+            onPress={handleStopTimer}
+          />
+        )}
       </View>
     </View>
   );
